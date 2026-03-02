@@ -1,0 +1,58 @@
+site_name: smol-bench
+site_url: https://michael-borck.github.io/smol-bench/
+site_description: Systematic benchmarks of quantized small language models on consumer hardware
+repo_url: https://github.com/michael-borck/smol-bench
+repo_name: michael-borck/smol-bench
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: custom
+    accent: custom
+  font:
+    text: DM Sans
+    code: JetBrains Mono
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - https://cdn.plot.ly/plotly-2.35.2.min.js
+  - javascripts/benchmark_data.js
+  - javascripts/chart_theme.js
+  - javascripts/charts_overview.js
+  - javascripts/charts_quality.js
+  - javascripts/charts_speed.js
+  - javascripts/charts_efficiency.js
+
+nav:
+  - Home: index.md
+  - Benchmarking Guide: guide.md
+  - Results:
+    - Quality: quality.md
+    - Speed: speed.md
+    - Bang per Bit: bang-per-bit.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html

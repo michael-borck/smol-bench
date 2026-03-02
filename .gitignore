@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Results (large files — publish to HuggingFace, not git)
+results/**/*.json
+results/**/*.csv
+!results/.gitkeep
+
+# Models (never commit GGUF files)
+models/
+*.gguf
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MkDocs build
+site/
