@@ -44,9 +44,11 @@ nav:
     - Bang per Bit: bang-per-bit.md
   - Hardware:
     - Colmena: colmena.md
+    - VRAM Tiers: tiers.md
   - Future Research:
     - Perceived Intelligence: future/perceived-intelligence.md
     - Multi-GPU Inference: future/multi-gpu.md
+    - Multi-GPU Guide: future/multi-gpu-ai-inference.md
 
 markdown_extensions:
   - admonition

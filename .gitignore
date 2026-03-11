@@ -12,7 +12,7 @@ results/**/*.json
 results/**/*.csv
 !results/.gitkeep
 
-# Models (never commit GGUF files)
+# Models (never commit model files)
 models/
 *.gguf
 

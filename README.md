@@ -26,33 +26,30 @@ Each tier is benchmarked on the **worst-in-class GPU** for that VRAM level. If i
 
 ## The Model Matrix
 
-### Full-Precision Small Models
+All models use **GGUF format** at every precision level — from lossless BF16 down to aggressive Q2_K quantization. GGUF BF16 preserves the original model precision; it's the same weights in a container format optimised for local inference. This means a BF16 SmolLM2-1.7B and a Q4_K_M Qwen3-4B are evaluated through the same toolchain.
 
-| Model | Parameters | BF16 Size | Fits in Tier |
+### 16 Models (0.135B to 7B)
+
+| Model | Parameters | BF16 Size | Q4_K_M Size |
 |---|---|---|---|
-| SmolLM2-1.7B | 1.7B | ~3.4 GB | 4GB+ |
-| SmolLM3-3B | 3B | ~6 GB | 8GB+ |
-| Gemma 3-1B-it | 1B | ~2 GB | 4GB+ |
-| TinyLlama-1.1B | 1.1B | ~2.2 GB | 4GB+ |
+| SmolLM2-135M-Instruct | 0.135B | ~0.3 GB | ~0.1 GB |
+| SmolLM2-360M-Instruct | 0.36B | ~0.7 GB | ~0.2 GB |
+| Gemma 3-1B-it | 1B | ~2.0 GB | ~0.6 GB |
+| Llama 3.2-1B-Instruct | 1B | ~2.0 GB | ~0.6 GB |
+| TinyLlama-1.1B | 1.1B | ~2.2 GB | ~0.7 GB |
+| DeepSeek-R1-Distill-Qwen-1.5B | 1.5B | ~3.0 GB | ~1.0 GB |
+| Qwen3-1.7B | 1.7B | ~3.4 GB | ~1.1 GB |
+| SmolLM2-1.7B-Instruct | 1.7B | ~3.4 GB | ~1.1 GB |
+| Ministral 3B | 3B | ~6.0 GB | ~1.9 GB |
+| Qwen2.5-Coder-3B | 3B | ~6.0 GB | ~1.9 GB |
+| Llama 3.2-3B-Instruct | 3.2B | ~6.4 GB | ~2.0 GB |
+| Phi-4-Mini (3.8B) | 3.8B | ~7.6 GB | ~2.4 GB |
+| Phi-4-Mini-Reasoning | 3.8B | ~7.6 GB | ~2.4 GB |
+| Gemma 3-4B-it | 4B | ~8.0 GB | ~2.5 GB |
+| Qwen3-4B-Instruct | 4B | ~8.0 GB | ~2.5 GB |
+| DeepSeek-R1-Distill-Qwen-7B | 7B | ~14.0 GB | ~4.4 GB |
 
-### Quantized Models (Q4_K_M and other levels)
-
-| Model | Parameters | Q4_K_M Size | Fits in Tier |
-|---|---|---|---|
-| Qwen3-4B-Instruct | 4B | ~2.5 GB | 4GB+ |
-| Llama 3.2-3B-Instruct | 3.2B | ~2.0 GB | 4GB+ |
-| Phi-4-Mini (3.8B) | 3.8B | ~2.4 GB | 4GB+ |
-| Gemma 3-4B-it | 4B | ~2.5 GB | 4GB+ |
-| DeepSeek-R1-Distill-Qwen-7B | 7B | ~4.4 GB | 6GB+ |
-| Qwen3-1.7B | 1.7B | ~1.1 GB | 4GB+ |
-| DeepSeek-R1-Distill-Qwen-1.5B | 1.5B | ~1.0 GB | 4GB+ |
-| SmolLM2-1.7B | 1.7B | ~1.1 GB | 4GB+ |
-| Ministral 3B | 3B | ~1.9 GB | 4GB+ |
-| Qwen2.5-Coder-3B | 3B | ~1.9 GB | 4GB+ |
-| Phi-4-Mini-Reasoning | 3.8B | ~2.4 GB | 4GB+ |
-| Llama 3.2-1B-Instruct | 1B | ~0.6 GB | 4GB+ |
-| Gemma 3-1B-it | 1B | ~0.6 GB | 4GB+ |
-| TinyLlama-1.1B | 1.1B | ~0.7 GB | 4GB+ |
+Within each VRAM tier, every model that fits at any precision level competes. For example, in the 4GB tier: SmolLM2-1.7B at BF16 (~3.4GB) competes against Qwen3-4B at Q4_K_M (~2.5GB).
 
 ### Tasks
 
@@ -104,10 +101,28 @@ vram-bench submit          # packages results for community submission
 
 | Script | Purpose |
 |--------|---------|
+| `scripts/download_models.sh` | Download pre-built GGUF models for the benchmark matrix |
+| `scripts/convert_and_quantize.sh` | Convert any HuggingFace model to GGUF and quantize to all levels |
 | `scripts/benchmark_quality.py` | Run lm-evaluation-harness across GGUF models |
 | `scripts/benchmark_speed.py` | Run llama-bench for speed metrics |
 | `scripts/generate_chart_data.py` | Generate interactive chart data from results |
-| `scripts/download_models.sh` | Download all GGUF models for the benchmark matrix |
+
+### Producing Your Own GGUFs
+
+If a pre-built GGUF doesn't exist for a model, you can create the full quant matrix from any HuggingFace model:
+
+```bash
+# Convert and quantize a HuggingFace model to all precision levels
+bash scripts/convert_and_quantize.sh HuggingFaceTB/SmolLM2-1.7B-Instruct
+
+# Just Q4_K_M (fast)
+bash scripts/convert_and_quantize.sh google/gemma-3-1b-it --q4-only
+
+# Convert and upload to the vram-bench HuggingFace org
+bash scripts/convert_and_quantize.sh HuggingFaceTB/SmolLM2-1.7B-Instruct --upload
+```
+
+This requires [llama.cpp](https://github.com/ggml-org/llama.cpp) built locally. The conversion is lossless (BF16 GGUF = original precision), and all quantization levels are produced from that BF16 source.
 
 ## Hardware
 
@@ -135,8 +150,10 @@ Full documentation is available at the [vram-bench docs site](https://michael-bo
 
 ## Publishing Plan
 
-- **HuggingFace Dataset:** Raw results (JSON from lm-eval + llama-bench CSVs) for reproducibility
-- **HuggingFace Space:** Interactive dashboard for exploring the data
+- **HuggingFace Org ([vram-bench](https://huggingface.co/vram-bench)):** Central home for models, data, and the dashboard
+  - **Model repos:** GGUFs we produce ourselves (filling gaps where no pre-built GGUF exists)
+  - **Dataset:** Raw benchmark results (JSON from lm-eval + llama-bench CSVs) for reproducibility
+  - **Space:** Interactive dashboard for exploring results by VRAM tier
 - **Technical Report:** Methodology and findings
 - **Blog Post:** Accessible "bang per bit" analysis for the local LLM community
 

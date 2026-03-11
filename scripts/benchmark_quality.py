@@ -32,7 +32,9 @@ TOKENIZER_LOOKUP = [
     (["gemma", "1b"], "google/gemma-3-1b-it"),
     (["deepseek", "r1", "7b"], "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"),
     (["deepseek", "r1", "1.5b"], "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"),
-    (["smollm", "1.7b"], "HuggingFaceTB/SmolLM2-1.7B"),
+    (["smollm2", "1.7b"], "HuggingFaceTB/SmolLM2-1.7B-Instruct"),
+    (["smollm2", "360m"], "HuggingFaceTB/SmolLM2-360M-Instruct"),
+    (["smollm2", "135m"], "HuggingFaceTB/SmolLM2-135M-Instruct"),
     (["ministral", "3b"], "mistralai/Ministral-3-3B-Instruct-2512"),
     (["tinyllama"], "TinyLlama/TinyLlama-1.1B-Chat-v1.0"),
 ]

@@ -24,20 +24,22 @@ from pathlib import Path
 # ── Model definitions ────────────────────────────────────────────────────
 
 MODELS = [
-    {"id": "qwen3-4b", "name": "Qwen3-4B", "family": "Qwen", "params_b": 4.0},
-    {"id": "qwen3-1.7b", "name": "Qwen3-1.7B", "family": "Qwen", "params_b": 1.7},
-    {"id": "llama-3.2-3b", "name": "Llama-3.2-3B", "family": "Llama", "params_b": 3.2},
-    {"id": "llama-3.2-1b", "name": "Llama-3.2-1B", "family": "Llama", "params_b": 1.0},
-    {"id": "phi-4-mini", "name": "Phi-4-Mini", "family": "Phi", "params_b": 3.8},
+    {"id": "smollm2-135m", "name": "SmolLM2-135M", "family": "SmolLM", "params_b": 0.135},
+    {"id": "smollm2-360m", "name": "SmolLM2-360M", "family": "SmolLM", "params_b": 0.36},
     {"id": "gemma-3-1b", "name": "Gemma-3-1B", "family": "Gemma", "params_b": 1.0},
-    {"id": "gemma-3-4b", "name": "Gemma-3-4B", "family": "Gemma", "params_b": 4.0},
+    {"id": "llama-3.2-1b", "name": "Llama-3.2-1B", "family": "Llama", "params_b": 1.0},
+    {"id": "tinyllama-1.1b", "name": "TinyLlama-1.1B", "family": "TinyLlama", "params_b": 1.1},
     {"id": "deepseek-r1-1.5b", "name": "DeepSeek-R1-1.5B", "family": "DeepSeek", "params_b": 1.5},
+    {"id": "qwen3-1.7b", "name": "Qwen3-1.7B", "family": "Qwen", "params_b": 1.7},
     {"id": "smollm2-1.7b", "name": "SmolLM2-1.7B", "family": "SmolLM", "params_b": 1.7},
     {"id": "ministral-3b", "name": "Ministral-3B", "family": "Mistral", "params_b": 3.0},
     {"id": "qwen2.5-coder-3b", "name": "Qwen2.5-Coder-3B", "family": "Qwen", "params_b": 3.0},
+    {"id": "llama-3.2-3b", "name": "Llama-3.2-3B", "family": "Llama", "params_b": 3.2},
+    {"id": "phi-4-mini", "name": "Phi-4-Mini", "family": "Phi", "params_b": 3.8},
     {"id": "phi-4-mini-reasoning", "name": "Phi-4-Mini-Reasoning", "family": "Phi", "params_b": 3.8},
+    {"id": "gemma-3-4b", "name": "Gemma-3-4B", "family": "Gemma", "params_b": 4.0},
+    {"id": "qwen3-4b", "name": "Qwen3-4B", "family": "Qwen", "params_b": 4.0},
     {"id": "deepseek-r1-7b", "name": "DeepSeek-R1-7B", "family": "DeepSeek", "params_b": 7.0},
-    {"id": "tinyllama-1.1b", "name": "TinyLlama-1.1B", "family": "TinyLlama", "params_b": 1.1},
 ]
 
 QUANT_LEVELS = [
@@ -55,20 +57,22 @@ TASKS = ["mmlu", "hellaswag", "gsm8k", "truthfulqa", "arc_challenge"]
 
 # Approximate BF16 scores by model (realistic ranges)
 BF16_SCORES = {
-    "qwen3-4b":             {"mmlu": 65.2, "hellaswag": 76.1, "gsm8k": 58.3, "truthfulqa": 52.4, "arc_challenge": 55.8},
-    "qwen3-1.7b":           {"mmlu": 48.5, "hellaswag": 62.3, "gsm8k": 30.1, "truthfulqa": 44.2, "arc_challenge": 42.7},
-    "llama-3.2-3b":         {"mmlu": 58.7, "hellaswag": 73.5, "gsm8k": 44.6, "truthfulqa": 49.1, "arc_challenge": 51.3},
-    "llama-3.2-1b":         {"mmlu": 38.2, "hellaswag": 55.8, "gsm8k": 18.3, "truthfulqa": 40.5, "arc_challenge": 35.1},
-    "phi-4-mini":           {"mmlu": 63.8, "hellaswag": 74.9, "gsm8k": 62.1, "truthfulqa": 50.7, "arc_challenge": 56.2},
+    "smollm2-135m":         {"mmlu": 25.3, "hellaswag": 38.5, "gsm8k": 2.1, "truthfulqa": 36.2, "arc_challenge": 24.8},
+    "smollm2-360m":         {"mmlu": 30.1, "hellaswag": 46.2, "gsm8k": 5.8, "truthfulqa": 37.9, "arc_challenge": 28.5},
     "gemma-3-1b":           {"mmlu": 39.5, "hellaswag": 57.2, "gsm8k": 21.4, "truthfulqa": 42.1, "arc_challenge": 36.8},
-    "gemma-3-4b":           {"mmlu": 62.1, "hellaswag": 75.3, "gsm8k": 52.7, "truthfulqa": 51.3, "arc_challenge": 54.1},
+    "llama-3.2-1b":         {"mmlu": 38.2, "hellaswag": 55.8, "gsm8k": 18.3, "truthfulqa": 40.5, "arc_challenge": 35.1},
+    "tinyllama-1.1b":       {"mmlu": 32.1, "hellaswag": 50.3, "gsm8k": 8.5, "truthfulqa": 38.7, "arc_challenge": 30.2},
     "deepseek-r1-1.5b":     {"mmlu": 44.3, "hellaswag": 58.1, "gsm8k": 38.5, "truthfulqa": 41.8, "arc_challenge": 39.2},
+    "qwen3-1.7b":           {"mmlu": 48.5, "hellaswag": 62.3, "gsm8k": 30.1, "truthfulqa": 44.2, "arc_challenge": 42.7},
     "smollm2-1.7b":         {"mmlu": 46.8, "hellaswag": 61.5, "gsm8k": 28.7, "truthfulqa": 43.5, "arc_challenge": 41.3},
     "ministral-3b":         {"mmlu": 56.4, "hellaswag": 71.8, "gsm8k": 41.2, "truthfulqa": 48.3, "arc_challenge": 49.7},
     "qwen2.5-coder-3b":     {"mmlu": 52.1, "hellaswag": 68.4, "gsm8k": 35.8, "truthfulqa": 45.6, "arc_challenge": 46.2},
+    "llama-3.2-3b":         {"mmlu": 58.7, "hellaswag": 73.5, "gsm8k": 44.6, "truthfulqa": 49.1, "arc_challenge": 51.3},
+    "phi-4-mini":           {"mmlu": 63.8, "hellaswag": 74.9, "gsm8k": 62.1, "truthfulqa": 50.7, "arc_challenge": 56.2},
     "phi-4-mini-reasoning": {"mmlu": 64.5, "hellaswag": 74.2, "gsm8k": 67.8, "truthfulqa": 51.2, "arc_challenge": 57.1},
+    "gemma-3-4b":           {"mmlu": 62.1, "hellaswag": 75.3, "gsm8k": 52.7, "truthfulqa": 51.3, "arc_challenge": 54.1},
+    "qwen3-4b":             {"mmlu": 65.2, "hellaswag": 76.1, "gsm8k": 58.3, "truthfulqa": 52.4, "arc_challenge": 55.8},
     "deepseek-r1-7b":       {"mmlu": 68.3, "hellaswag": 78.5, "gsm8k": 72.1, "truthfulqa": 54.6, "arc_challenge": 59.8},
-    "tinyllama-1.1b":       {"mmlu": 32.1, "hellaswag": 50.3, "gsm8k": 8.5, "truthfulqa": 38.7, "arc_challenge": 30.2},
 }
 
 
