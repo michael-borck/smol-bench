@@ -26,7 +26,7 @@ The UI layer (Open WebUI, LM Studio, etc.) does not do the heavy lifting. The in
 
 ### 2.1 Pipeline Parallelism (Layer Offloading)
 
-Used by: **llama.cpp**, **Ollama**, **LM Studio**, **Jan**
+Used by: **llama.cpp**, **Ollama** (via llama.cpp under the hood), **LM Studio**, **Jan**
 
 The model's layers are divided sequentially across GPUs like an assembly line:
 
@@ -122,11 +122,37 @@ These are approximate single-user inference figures for pipeline parallelism:
 
 > **Verdict:** For a single-user research or teaching context, 10–20 t/s on a high-quality 34B model is entirely usable. Conversational feel begins around 8 t/s; anything above 15 t/s is comfortable.
 
-### 3.4 Weaknesses to Know
+### 3.4 Scaling Up: The 6x GPU Chassis Option
+
+A mining-style chassis (e.g., WEIHO 6-GPU) with six RTX 2060 Supers creates an interesting decision point:
+
+| Configuration | Cost (AUD, approx.) | Total VRAM | Architecture |
+|---|---|---|---|
+| 6x RTX 2060 Super | $600–700 secondhand | 48 GB | 6 independent 8 GB cards |
+| WEIHO chassis + PSU | ~$190 | — | PCIe x1 risers |
+| **Total** | **~$800–900** | **48 GB** | — |
+
+This is less than a single RTX 3090 (24 GB, ~$800–1000 AUD). But the 48 GB figure is misleading without understanding two very different use modes:
+
+**Pooled VRAM (one large model split across cards):** Using llama.cpp `--tensor-split 1,1,1,1,1,1`, a single ~40 GB model can theoretically run across all six cards. However, mining chassis use **PCIe x1 riser cables**, which dramatically limit inter-GPU bandwidth compared to x8 or x16 slots. This makes layer splitting functional but slow — each pipeline stage waits on the narrow PCIe x1 link to pass activations to the next card. For a single large model, a single RTX 3090 at 936 GB/s bandwidth will be significantly faster than six 2060 Supers connected by risers.
+
+**Independent workers (six separate models):** The compelling use case is running **six independent 7B model instances simultaneously** — one per card, no cross-GPU communication needed. This is ideal for:
+
+- Load balancing across multiple concurrent users
+- Mixture-of-Agents (MoA) architectures where multiple models contribute to a response
+- Batch evaluation (e.g., running vram-bench across six models in parallel)
+- A/B testing different models or quantisation levels side by side
+
+Six concurrent 7B inference workers for under $1000 AUD is remarkable value. The PCIe x1 riser limitation is irrelevant when each card runs independently.
+
+> **Key insight:** The value of many cheap GPUs depends entirely on whether you need one big model or many small ones. For pooled VRAM, fewer cards in proper PCIe slots wins. For concurrent independent inference, more cards wins regardless of slot bandwidth.
+
+### 3.5 Weaknesses to Know
 
 - **No native bf16 support** — the Turing architecture pre-dates bfloat16. This effectively rules out fine-tuning modern LLMs on these cards (QLoRA via fp16 is possible but slower and less stable).
 - **Older CUDA cores** — raw TFLOP compute is well behind Ampere/Ada for tasks that are compute-bound (batch inference, training).
-- **Thermal management** — three cards running sustained inference in a single chassis needs airflow planning. Budget for good case fan coverage.
+- **Thermal management** — three or more cards running sustained inference in a single chassis needs airflow planning. Mining chassis have open-air designs that help, but power draw scales linearly (~75W per card under load).
+- **PCIe riser bandwidth** — mining-style x1 risers work fine for independent inference but are a severe bottleneck for layer-split or tensor-split workloads. For pooled VRAM, cards in proper x8/x16 motherboard slots are strongly preferred.
 
 ---
 
@@ -136,10 +162,11 @@ These are approximate single-user inference figures for pipeline parallelism:
 
 | Tool | Multi-GPU | Config Effort | Format Support | Best For |
 |---|---|---|---|---|
-| **Ollama** | Automatic (pipeline) | Zero | GGUF | Quickest path to working CLI chat |
+| **Ollama** | Layer splitting via llama.cpp | Low | GGUF | Quickest path to working multi-GPU chat |
 | **llama.cpp CLI** | `--tensor-split` flags | Low (script it) | GGUF | Custom launch scripts, fine-grained layer control |
 | **ExLlamaV2** | Explicit per-GPU allocation | Medium | EXL2, GPTQ | Maximum t/s on matched Nvidia cards |
-| **vLLM** | Tensor parallelism | Medium-High | GPTQ, AWQ, fp16 | High-throughput serving, batch inference |
+| **TabbyAPI** | ExLlamaV2 backend | Medium | EXL2, GPTQ | Lighter alternative to vLLM for local multi-GPU serving |
+| **vLLM** | Tensor parallelism | Medium-High | GPTQ, AWQ, fp16 | High-throughput production serving, batch inference |
 
 ### 4.2 UI Frontends
 
@@ -155,9 +182,18 @@ These are approximate single-user inference figures for pipeline parallelism:
 
 **For CLI chat (lowest friction):**
 ```bash
-# Install Ollama — auto-detects all 3 GPUs
-ollama run command-r   # ~15GB Q4 model, fits comfortably
+# Ollama splits layers across GPUs via llama.cpp under the hood.
+# Set CUDA_VISIBLE_DEVICES to select GPUs, or let it auto-detect.
+CUDA_VISIBLE_DEVICES=0,1,2 ollama run command-r   # ~15GB Q4 model, splits across 3 cards
+
+# For finer control over the split:
+# OLLAMA_GPU_SPLIT=8,8,8 ollama run command-r
+
+# Or let Ollama distribute layers automatically:
+# Use PARAMETER num_gpu 999 in a Modelfile to push all layers to GPU
 ```
+
+> **Note:** Ollama's multi-GPU is layer splitting (pipeline parallelism), not true tensor parallelism. It is functionally VRAM pooling — a model larger than one card's VRAM can run across multiple cards — but with PCIe bandwidth overhead between stages. For benchmarking where you need precise control over the split, use llama.cpp directly.
 
 **For maximum performance (ExLlamaV2):**
 ```python
@@ -182,6 +218,23 @@ model.load([8192, 8192, 8192])
   --temp 0.7 \
   -i                           # interactive / chat mode
 ```
+
+**For production-style multi-GPU serving (vLLM):**
+```bash
+# Genuine tensor parallelism — GPUs work in parallel, not sequentially
+python -m vllm.entrypoints.openai.api_server \
+  --model mistralai/Mistral-22B \
+  --tensor-parallel-size 3 \
+  --gpu-memory-utilization 0.9
+```
+
+vLLM provides an OpenAI-compatible API, so any frontend (Open WebUI, etc.) can connect to it. Higher setup complexity than Ollama but better multi-GPU utilisation for a single large model.
+
+**For lightweight local serving (TabbyAPI):**
+
+TabbyAPI uses ExLlamaV2 under the hood with an OpenAI-compatible API. Lighter than vLLM, good multi-GPU support, designed for single-user local inference. A middle ground between Ollama's simplicity and vLLM's production features.
+
+> **Practical note:** These tools don't conflict — you can have Ollama for quick single-card use, llama.cpp for benchmarking with precise control, and vLLM for multi-GPU serving, all on the same machine.
 
 ---
 
