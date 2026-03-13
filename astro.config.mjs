@@ -11,7 +11,6 @@ export default defineConfig({
       social: [
         { icon: 'external', label: 'Home', href: 'https://locobench.org' },
         { icon: 'external', label: 'LocoLab', href: 'https://locolabo.org' },
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/michael-borck/loco-bench' },
       ],
       customCss: ['./src/styles/custom.css'],
       head: [
